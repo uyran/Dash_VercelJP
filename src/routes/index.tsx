@@ -585,7 +585,7 @@ function Dashboard() {
                           ativo && sortDir === "asc" ? "decrescente" : "crescente"
                         }`}
                         title={`Ordenar por ${col.label}`}
-                        className="flex w-full items-center justify-center gap-1 rounded-md border-2 border-black/20 bg-gradient-to-b from-white to-neutral-200 px-1.5 py-1.5 text-[11px] leading-none font-bold uppercase tracking-wide text-nav shadow-[0_3px_0_0_rgba(0,0,0,0.4)] transition-all duration-150 hover:-translate-y-[1px] hover:from-chart-4 hover:to-amber-300 hover:text-black hover:shadow-[0_4px_0_0_rgba(0,0,0,0.45)] active:translate-y-[2px] active:shadow-[0_1px_0_0_rgba(0,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chart-4"
+                        className={`${col.grande ? "w-fit mx-auto" : "w-full"} flex items-center justify-center gap-1 rounded-md border-2 border-black/20 bg-gradient-to-b from-white to-neutral-200 px-3 py-1.5 text-[11px] leading-none font-bold uppercase tracking-wide text-nav shadow-[0_3px_0_0_rgba(0,0,0,0.4)] transition-all duration-150 hover:-translate-y-[1px] hover:from-chart-4 hover:to-amber-300 hover:text-black hover:shadow-[0_4px_0_0_rgba(0,0,0,0.45)] active:translate-y-[2px] active:shadow-[0_1px_0_0_rgba(0,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chart-4`}
                       >
                         <span className={`text-center ${col.grande ? "text-sm" : ""}`}>
                           {col.label}
@@ -600,7 +600,7 @@ function Dashboard() {
             <tbody>
               {list.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-6 px-4 text-center text-muted-foreground">
+                  <td colSpan={5} className="py-6 px-4 text-left text-muted-foreground">
                     Selecione uma cidade para consultar a votação
                   </td>
                 </tr>
