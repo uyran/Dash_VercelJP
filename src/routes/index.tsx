@@ -380,11 +380,11 @@ function Chart({ title, data, color }: { title: string; data: City[]; color: str
 type SortKey = "cidade" | "v22" | "v26" | "diff" | "pct";
 
 const COLUNAS: { key: SortKey; label: string; cls: string; grande?: boolean }[] = [
-  { key: "cidade", label: "Cidade", cls: "w-[40%]", grande: true },
-  { key: "v22", label: "2022", cls: "w-[15%]" },
-  { key: "v26", label: "2026", cls: "w-[15%]" },
-  { key: "diff", label: "dif.", cls: "w-[15%]" },
-  { key: "pct", label: "%", cls: "w-[15%]" },
+  { key: "cidade", label: "Cidade", cls: "w-[32%] pl-4 pr-2", grande: true },
+  { key: "v22", label: "2022", cls: "w-[18%] px-2" },
+  { key: "v26", label: "2026", cls: "w-[17%] px-3" },
+  { key: "diff", label: "dif.", cls: "w-[16%] px-3" },
+  { key: "pct", label: "%", cls: "w-[17%] px-3" },
 ];
 
 const sortValue = (c: City, k: SortKey): number =>
@@ -576,7 +576,7 @@ function Dashboard() {
                       key={col.key}
                       scope="col"
                       aria-sort={ativo ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-                      className={`px-4 py-2 ${col.cls}`}
+                      className={`py-2 ${col.cls}`}
                     >
                       <button
                         type="button"
@@ -585,7 +585,7 @@ function Dashboard() {
                           ativo && sortDir === "asc" ? "decrescente" : "crescente"
                         }`}
                         title={`Ordenar por ${col.label}`}
-                        className={`${col.grande ? "w-fit mx-auto" : "w-full"} flex items-center justify-center gap-1 rounded-md border-2 border-black/20 bg-gradient-to-b from-white to-neutral-200 px-3 py-1.5 text-[11px] leading-none font-bold uppercase tracking-wide text-nav shadow-[0_3px_0_0_rgba(0,0,0,0.4)] transition-all duration-150 hover:-translate-y-[1px] hover:from-chart-4 hover:to-amber-300 hover:text-black hover:shadow-[0_4px_0_0_rgba(0,0,0,0.45)] active:translate-y-[2px] active:shadow-[0_1px_0_0_rgba(0,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chart-4`}
+                        className={`${col.grande ? "w-fit mr-auto" : "w-full"} flex items-center justify-center gap-1 rounded-md border-2 border-black/20 bg-gradient-to-b from-white to-neutral-200 px-3 py-1.5 text-[11px] leading-none font-bold uppercase tracking-wide text-nav shadow-[0_3px_0_0_rgba(0,0,0,0.4)] transition-all duration-150 hover:-translate-y-[1px] hover:from-chart-4 hover:to-amber-300 hover:text-black hover:shadow-[0_4px_0_0_rgba(0,0,0,0.45)] active:translate-y-[2px] active:shadow-[0_1px_0_0_rgba(0,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chart-4`}
                       >
                         <span className={`text-center ${col.grande ? "text-sm" : ""}`}>
                           {col.label}
@@ -607,18 +607,18 @@ function Dashboard() {
               ) : (
                 list.map((c) => (
                   <tr key={c.cidade} className="border-b text-center hover:bg-nav/20">
-                    <td className="py-2 px-4 text-left">
+                    <td className="py-2 pl-4 pr-2 text-left">
                       <span className="block truncate">{c.cidade}</span>
                     </td>
-                    <td className="py-2 px-4 whitespace-nowrap">{fmt(c.v22)}</td>
-                    <td className="py-2 px-4 whitespace-nowrap">{fmt(c.v26)}</td>
+                    <td className="py-2 px-3 whitespace-nowrap">{fmt(c.v22)}</td>
+                    <td className="py-2 px-3 whitespace-nowrap">{fmt(c.v26)}</td>
                     <td
-                      className={`py-2 px-4 font-semibold whitespace-nowrap ${c.diff >= 0 ? "text-success" : "text-danger"}`}
+                      className={`py-2 px-3 font-semibold whitespace-nowrap ${c.diff >= 0 ? "text-success" : "text-danger"}`}
                     >
                       {c.diff > 0 ? "+" : ""}
                       {fmt(c.diff)}
                     </td>
-                    <td className="py-2 px-4 whitespace-nowrap text-muted-foreground">
+                    <td className="py-2 px-3 whitespace-nowrap text-muted-foreground">
                       {pct(c.v22, c.v26)}
                     </td>
                   </tr>
