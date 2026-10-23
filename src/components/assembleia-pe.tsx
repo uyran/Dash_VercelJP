@@ -104,7 +104,6 @@ const perc = (n: number) =>
 type Partido = {
   chave: string;
   rotulo: string;
-  siglas: string[];
   cor: string;
   espectro: number;
   fed: boolean;
@@ -306,7 +305,6 @@ export function AssembleiaPE() {
         return {
           chave: siglas.join("/"),
           rotulo: siglas.join("/"),
-          siglas,
           cor: CORES[siglaCor] ?? "#94a3b8",
           espectro,
           fed,
@@ -414,13 +412,21 @@ export function AssembleiaPE() {
             ref={boxPartidosRef}
             className="max-h-[16.5rem] overflow-auto rounded-lg border shadow-sm"
           >
-            <table className="w-full text-sm">
+            <table className="w-full table-fixed text-sm">
               <thead>
                 <tr className="text-left text-muted-foreground">
-                  <th className="sticky top-0 z-10 border-b bg-card py-2">Partido ou federação</th>
-                  <th className="sticky top-0 z-10 border-b bg-card py-2 text-right">Cadeiras</th>
-                  <th className="sticky top-0 z-10 border-b bg-card py-2 text-right">Votos</th>
-                  <th className="sticky top-0 z-10 border-b bg-card py-2 text-right">%</th>
+                  <th className="sticky top-0 z-10 border-b bg-card px-2 py-2 w-[52%]">
+                    Partido ou federação
+                  </th>
+                  <th className="sticky top-0 z-10 border-b bg-card px-2 py-2 w-[16%] text-center">
+                    Cadeiras
+                  </th>
+                  <th className="sticky top-0 z-10 border-b bg-card px-2 py-2 w-[20%] text-center">
+                    Votos
+                  </th>
+                  <th className="sticky top-0 z-10 border-b bg-card px-2 py-2 w-[12%] text-center">
+                    %
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -432,16 +438,16 @@ export function AssembleiaPE() {
                     onClick={() => alternar(b.chave)}
                     className={`cursor-pointer border-b hover:bg-muted ${sel === b.chave ? "bg-muted" : ""} ${escurecer(b.chave)}`}
                   >
-                    <td className="py-2">
+                    <td className="px-2 py-2">
                       <span
                         className="inline-block h-3 w-3 rounded-sm align-middle"
                         style={{ background: b.cor }}
                       />
                       <span className="ml-2 align-middle">{b.rotulo}</span>
                     </td>
-                    <td className="py-2 text-right font-semibold">{num(b.vagas)}</td>
-                    <td className="py-2 text-right">{num(b.votos)}</td>
-                    <td className="py-2 text-right text-muted-foreground">{perc(b.pct)}</td>
+                    <td className="px-2 py-2 text-center font-semibold">{num(b.vagas)}</td>
+                    <td className="px-2 py-2 text-center">{num(b.votos)}</td>
+                    <td className="px-2 py-2 text-center text-muted-foreground">{perc(b.pct)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -524,8 +530,16 @@ export function AssembleiaPE() {
       </div>
 
       <p className="mt-2! flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <span>
+          Desenvolvido por{" "}
+          <a
+            href="mailto:uyrancosta@gmail.com"
+            className="font-medium text-nav underline underline-offset-2 hover:text-nav/80"
+          >
+            uyrancosta@gmail.com
+          </a>
+        </span>
         <span>Dados oficiais do TSE / Mapas: Electomaps</span>
-        <span>Desenvolvido por uyrancosta@gmail.com</span>
       </p>
     </section>
   );

@@ -138,11 +138,18 @@ function Card({
 
   if (canHover) {
     return (
-      <HoverCard openDelay={150}>
-        <HoverCardTrigger asChild>{content}</HoverCardTrigger>
+      <HoverCard open={open} onOpenChange={setOpen} openDelay={150} closeDelay={150}>
+        <HoverCardTrigger
+          asChild
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setOpen((o) => !o)}
+        >
+          {content}
+        </HoverCardTrigger>
         <HoverCardContent
-          className="w-[440px] max-w-[calc(100vw-32px)] bg-hovercard"
+          className="w-[440px] max-w-[calc(100vw-32px)] border-2 border-nav/70 bg-hovercard shadow-lg"
           collisionPadding={16}
+          onPointerDownOutside={(e) => e.preventDefault()}
         >
           <p className="mb-3 font-semibold">{label}</p>
           <div className="max-h-80 overflow-auto">{details}</div>
@@ -155,7 +162,7 @@ function Card({
     <div className="relative h-full">
       {content}
       {open && (
-        <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-[440px] max-w-[calc(100vw-32px)] rounded-md border bg-hovercard p-4 shadow-md">
+        <div className="absolute left-0 top-[calc(100%+8px)] z-50 w-[440px] max-w-[calc(100vw-32px)] rounded-md border-2 border-nav/70 bg-hovercard p-4 shadow-lg">
           <p className="mb-3 font-semibold">{label}</p>
           <div className="max-h-80 overflow-auto">{details}</div>
         </div>
@@ -320,8 +327,6 @@ function Chart({ title, data, color }: { title: string; data: City[]; color: str
             size="icon"
             className="bg-nav text-nav-foreground hover:bg-nav/90"
             aria-label={`Retroceder — ${title}`}
-            title="15 cidades anteriores"
-            disabled={page === 0}
             onClick={() => setPage((p) => Math.max(0, p - 1))}
           >
             <ChevronLeft />
@@ -331,8 +336,6 @@ function Chart({ title, data, color }: { title: string; data: City[]; color: str
             size="icon"
             className="bg-nav text-nav-foreground hover:bg-nav/90"
             aria-label={`Avançar — ${title}`}
-            title="Próximas 15 cidades"
-            disabled={page === lastPage}
             onClick={() => setPage((p) => Math.min(lastPage, p + 1))}
           >
             <ChevronRight />
@@ -374,11 +377,36 @@ function Chart({ title, data, color }: { title: string; data: City[]; color: str
   );
 }
 
+type SortKey = "cidade" | "v22" | "v26" | "diff" | "pct";
+
+const COLUNAS: { key: SortKey; label: string }[] = [
+  { key: "cidade", label: "Cidade" },
+  { key: "v22", label: "2022" },
+  { key: "v26", label: "2026" },
+  { key: "diff", label: "Diferença" },
+  { key: "pct", label: "%" },
+];
+
+const sortValue = (c: City, k: SortKey): number =>
+  k === "v22"
+    ? c.v22
+    : k === "v26"
+      ? c.v26
+      : k === "diff"
+        ? c.diff
+        : k === "pct"
+          ? c.v22 === 0
+            ? c.v26 > 0
+              ? Number.POSITIVE_INFINITY
+              : 0
+            : (c.v26 - c.v22) / c.v22
+          : 0;
+
 function Dashboard() {
   const { cities, t22, t26 } = useData();
   const [filter, setFilter] = useState("");
-  const [sort, setSort] = useState<"cidade-asc" | "votos-desc">("cidade-asc");
-  const todas = filter === TODAS;
+  const [sortKey, setSortKey] = useState<SortKey>("cidade");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   const up = cities.filter((c) => c.diff >= 0).sort((a, b) => b.diff - a.diff);
   const down = cities.filter((c) => c.diff < 0).sort((a, b) => a.diff - b.diff);
@@ -392,17 +420,26 @@ function Dashboard() {
   const top15total = top15.reduce((s, c) => s + c.v26, 0);
   const top15share = top15total / t26;
 
+  const toggleSort = (k: SortKey) => {
+    if (k === sortKey) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(k);
+      setSortDir("asc");
+    }
+  };
+
   const list = useMemo(() => {
     const base =
       filter === TODAS ? cities : filter ? cities.filter((c) => c.cidade === filter) : [];
-    const sorted = [...base];
-    if (sort === "cidade-asc") {
-      sorted.sort((a, b) => a.cidade.localeCompare(b.cidade, "pt-BR"));
-    } else {
-      sorted.sort((a, b) => b.v26 - a.v26);
-    }
+    const sorted = [...base].sort((a, b) =>
+      sortKey === "cidade"
+        ? a.cidade.localeCompare(b.cidade, "pt-BR")
+        : sortValue(a, sortKey) - sortValue(b, sortKey),
+    );
+    if (sortDir === "desc") sorted.reverse();
     return sorted;
-  }, [cities, filter, sort]);
+  }, [cities, filter, sortKey, sortDir]);
 
   return (
     <main className="mx-auto max-w-[1600px] space-y-8 px-4 py-8">
@@ -509,70 +546,75 @@ function Dashboard() {
       </section>
 
       <section className="rounded-xl border bg-card p-5 shadow-sm">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-[2rem] font-semibold">Votos por cidade</h3>
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-2 text-sm font-semibold">
-              <span className="whitespace-nowrap">Cidade</span>
-              <select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className="w-64 rounded-md border-2 border-nav/40 bg-nav/10 px-4 py-2 text-sm font-medium shadow-sm"
-              >
-                <option value="">Selecione uma cidade</option>
-                <option value={TODAS}>Todas as cidades</option>
-                {cities.map((c) => (
-                  <option key={c.cidade} value={c.cidade}>
-                    {c.cidade}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex items-center gap-2 text-sm font-semibold">
-              <span className="whitespace-nowrap">Ordenar</span>
-              <select
-                value={sort}
-                disabled={!todas}
-                onChange={(e) => setSort(e.target.value as "cidade-asc" | "votos-desc")}
-                className="w-64 rounded-md border-2 border-nav/40 bg-nav/10 px-4 py-2 text-sm font-medium shadow-sm disabled:cursor-not-allowed disabled:border-border disabled:bg-muted disabled:text-muted-foreground"
-              >
-                <option value="cidade-asc">Cidade (A → Z)</option>
-                <option value="votos-desc">Votos 2026 (maior → menor)</option>
-              </select>
-            </label>
-          </div>
+        <h3 className="text-[2rem] font-semibold">Votos por cidade</h3>
+        <div className="mb-3 mt-3 flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2 text-sm font-semibold">
+            <span className="whitespace-nowrap">Cidade</span>
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="w-64 rounded-md border-2 border-nav/40 bg-nav/10 px-4 py-2 text-sm font-medium shadow-sm"
+            >
+              <option value="">Selecione uma cidade</option>
+              <option value={TODAS}>Todas as cidades</option>
+              {cities.map((c) => (
+                <option key={c.cidade} value={c.cidade}>
+                  {c.cidade}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
         <div className="max-h-[410px] overflow-auto">
-          <table className="w-full text-sm bg-nav/10">
+          <table className="w-full table-fixed text-sm bg-nav/10">
             <thead className="sticky top-0 z-10 bg-nav">
               <tr className="text-center text-nav-foreground">
-                <th className="py-2 px-4 font-semibold">Cidade</th>
-                <th className="py-2 px-4 font-semibold">2022</th>
-                <th className="py-2 px-4 font-semibold">2026</th>
-                <th className="py-2 px-4 font-semibold">Diferença</th>
-                <th className="py-2 px-4 font-semibold">%</th>
+                {COLUNAS.map((col) => {
+                  const ativo = sortKey === col.key;
+                  return (
+                    <th
+                      key={col.key}
+                      scope="col"
+                      aria-sort={ativo ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
+                      className="px-3 py-2"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => toggleSort(col.key)}
+                        aria-label={`Ordenar por ${col.label} — ${
+                          ativo && sortDir === "asc" ? "decrescente" : "crescente"
+                        }`}
+                        title={`Ordenar por ${col.label}`}
+                        className="flex h-9 w-full items-center justify-center gap-1.5 rounded-md border-2 border-black/20 bg-gradient-to-b from-white to-neutral-200 px-2 text-xs font-bold uppercase tracking-wide text-nav shadow-[0_4px_0_0_rgba(0,0,0,0.4)] transition-all duration-150 hover:-translate-y-[1px] hover:from-chart-4 hover:to-amber-300 hover:text-black hover:shadow-[0_5px_0_0_rgba(0,0,0,0.45)] active:translate-y-[3px] active:shadow-[0_1px_0_0_rgba(0,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chart-4"
+                      >
+                        <span className="whitespace-nowrap">{col.label}</span>
+                        {ativo && <span aria-hidden="true">{sortDir === "asc" ? "▲" : "▼"}</span>}
+                      </button>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody>
               {list.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-6 pl-4 text-left text-muted-foreground">
+                  <td colSpan={5} className="py-6 px-4 text-center text-muted-foreground">
                     Selecione uma cidade para consultar a votação
                   </td>
                 </tr>
               ) : (
                 list.map((c) => (
                   <tr key={c.cidade} className="border-b text-center hover:bg-nav/20">
-                    <td className="py-2 px-4">{c.cidade}</td>
-                    <td className="py-2 px-4">{fmt(c.v22)}</td>
-                    <td className="py-2 px-4">{fmt(c.v26)}</td>
+                    <td className="py-2 px-3">{c.cidade}</td>
+                    <td className="py-2 px-3">{fmt(c.v22)}</td>
+                    <td className="py-2 px-3">{fmt(c.v26)}</td>
                     <td
-                      className={`py-2 px-4 font-semibold ${c.diff >= 0 ? "text-success" : "text-danger"}`}
+                      className={`py-2 px-3 font-semibold ${c.diff >= 0 ? "text-success" : "text-danger"}`}
                     >
                       {c.diff > 0 ? "+" : ""}
                       {fmt(c.diff)}
                     </td>
-                    <td className="py-2 px-4 text-muted-foreground">{pct(c.v22, c.v26)}</td>
+                    <td className="py-2 px-3 text-muted-foreground">{pct(c.v22, c.v26)}</td>
                   </tr>
                 ))
               )}
