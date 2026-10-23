@@ -39,13 +39,13 @@ const INICIAL = CIDADES.reduce((best, c) => (c.total > best.total ? c : best));
 type Ordem = "local" | "votos" | "endereco" | "bairro";
 
 const BTN_TOPO =
-  "inline-flex w-[120px] cursor-pointer justify-center rounded-lg border-2 px-3.5 py-2 text-sm font-semibold transition-all duration-150 hover:-translate-y-[1px] active:translate-y-[3px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
+  "mx-auto inline-flex w-full max-w-[120px] cursor-pointer justify-center rounded-lg border-2 px-2 py-2 text-center text-sm font-semibold leading-tight transition-all duration-150 hover:-translate-y-[1px] active:translate-y-[3px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2";
 const BTN_TOPO_ON =
   "border-transparent bg-gradient-to-b from-card to-neutral-200 text-nav shadow-[0_4px_0_0_rgba(0,0,0,0.35)] hover:shadow-[0_5px_0_0_rgba(0,0,0,0.4)] active:shadow-[0_1px_0_0_rgba(0,0,0,0.35)]";
 const BTN_TOPO_OFF =
   "border-black/25 bg-gradient-to-b from-nav-foreground/30 to-nav-foreground/10 text-nav-foreground shadow-[0_4px_0_0_rgba(0,0,0,0.45)] hover:from-nav-foreground/40 hover:to-nav-foreground/20 hover:shadow-[0_5px_0_0_rgba(0,0,0,0.5)] active:shadow-[0_1px_0_0_rgba(0,0,0,0.45)]";
 const BTN_TOPO_ESTATICO =
-  "inline-flex w-[120px] justify-center rounded-lg border-2 border-black/20 bg-gradient-to-b from-nav-foreground/20 to-nav-foreground/5 px-3.5 py-2 text-sm font-semibold text-nav-foreground shadow-[0_4px_0_0_rgba(0,0,0,0.4)]";
+  "mx-auto inline-flex w-full max-w-[120px] justify-center rounded-lg border-2 border-black/20 bg-gradient-to-b from-nav-foreground/20 to-nav-foreground/5 px-2 py-2 text-center text-sm font-semibold leading-tight text-nav-foreground shadow-[0_4px_0_0_rgba(0,0,0,0.4)]";
 
 const BTN_ZONA_ON =
   "border-emerald-800/70 bg-gradient-to-b from-success to-success/80 text-white shadow-[0_4px_0_0_rgba(12,75,42,0.9)] hover:shadow-[0_5px_0_0_rgba(12,75,42,0.9)] active:shadow-[0_1px_0_0_rgba(12,75,42,0.9)]";
@@ -151,7 +151,7 @@ export function LocaisZona() {
         <p className="text-sm text-muted-foreground">Selecione uma zona.</p>
       ) : (
         <div className="max-h-[340px] overflow-auto">
-          <table className="w-full table-fixed text-sm">
+          <table className="w-full min-w-[720px] table-fixed text-sm">
             <thead className="sticky top-0 z-10 bg-nav">
               <tr className="text-left text-nav-foreground">
                 {(

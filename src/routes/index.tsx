@@ -379,12 +379,12 @@ function Chart({ title, data, color }: { title: string; data: City[]; color: str
 
 type SortKey = "cidade" | "v22" | "v26" | "diff" | "pct";
 
-const COLUNAS: { key: SortKey; label: string }[] = [
-  { key: "cidade", label: "Cidade" },
-  { key: "v22", label: "2022" },
-  { key: "v26", label: "2026" },
-  { key: "diff", label: "dif." },
-  { key: "pct", label: "%" },
+const COLUNAS: { key: SortKey; label: string; cls: string }[] = [
+  { key: "cidade", label: "Cidade", cls: "w-[34%]" },
+  { key: "v22", label: "2022", cls: "w-[16%]" },
+  { key: "v26", label: "2026", cls: "w-[16%]" },
+  { key: "diff", label: "dif.", cls: "w-[16%]" },
+  { key: "pct", label: "%", cls: "w-[18%]" },
 ];
 
 const sortValue = (c: City, k: SortKey): number =>
@@ -566,7 +566,7 @@ function Dashboard() {
           </label>
         </div>
         <div className="max-h-[410px] overflow-auto">
-          <table className="w-full table-fixed text-sm bg-nav/10">
+          <table className="w-full min-w-[620px] table-fixed text-sm bg-nav/10">
             <thead className="sticky top-0 z-10 bg-nav">
               <tr className="text-center text-nav-foreground">
                 {COLUNAS.map((col) => {
@@ -576,7 +576,7 @@ function Dashboard() {
                       key={col.key}
                       scope="col"
                       aria-sort={ativo ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-                      className="px-3 py-2"
+                      className={`px-3 py-2 ${col.cls}`}
                     >
                       <button
                         type="button"
