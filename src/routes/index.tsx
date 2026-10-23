@@ -383,7 +383,7 @@ const COLUNAS: { key: SortKey; label: string }[] = [
   { key: "cidade", label: "Cidade" },
   { key: "v22", label: "2022" },
   { key: "v26", label: "2026" },
-  { key: "diff", label: "Diferença" },
+  { key: "diff", label: "dif." },
   { key: "pct", label: "%" },
 ];
 
@@ -585,9 +585,9 @@ function Dashboard() {
                           ativo && sortDir === "asc" ? "decrescente" : "crescente"
                         }`}
                         title={`Ordenar por ${col.label}`}
-                        className="flex h-9 w-full items-center justify-center gap-1.5 rounded-md border-2 border-black/20 bg-gradient-to-b from-white to-neutral-200 px-2 text-xs font-bold uppercase tracking-wide text-nav shadow-[0_4px_0_0_rgba(0,0,0,0.4)] transition-all duration-150 hover:-translate-y-[1px] hover:from-chart-4 hover:to-amber-300 hover:text-black hover:shadow-[0_5px_0_0_rgba(0,0,0,0.45)] active:translate-y-[3px] active:shadow-[0_1px_0_0_rgba(0,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chart-4"
+                        className="flex min-h-14 w-full items-center justify-center gap-1 rounded-md border-2 border-black/20 bg-gradient-to-b from-white to-neutral-200 px-2 py-2 text-[11px] leading-tight font-bold uppercase tracking-wide text-nav shadow-[0_4px_0_0_rgba(0,0,0,0.4)] transition-all duration-150 hover:-translate-y-[1px] hover:from-chart-4 hover:to-amber-300 hover:text-black hover:shadow-[0_5px_0_0_rgba(0,0,0,0.45)] active:translate-y-[3px] active:shadow-[0_1px_0_0_rgba(0,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chart-4"
                       >
-                        <span className="whitespace-nowrap">{col.label}</span>
+                        <span className="text-center">{col.label}</span>
                         {ativo && <span aria-hidden="true">{sortDir === "asc" ? "▲" : "▼"}</span>}
                       </button>
                     </th>

@@ -121,7 +121,7 @@ export function LocaisZona() {
         </span>
       </div>
 
-      <div className="mb-4 grid grid-cols-[repeat(auto-fill,180px)] gap-2">
+      <div className="mb-4 grid grid-cols-[repeat(auto-fill,140px)] gap-2">
         {info.zonas.map((z) => {
           const marcada = z.zona === zonaSel;
           return (
@@ -134,7 +134,7 @@ export function LocaisZona() {
                 onChange={() => setZonaSel(z.zona)}
               />
               <span
-                className={`inline-flex h-10 w-full cursor-pointer items-center justify-center truncate rounded-lg border-2 px-3.5 text-sm font-semibold transition-all duration-150 hover:-translate-y-[1px] active:translate-y-[3px] peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 ${
+                className={`inline-flex h-10 w-full cursor-pointer items-center justify-center truncate rounded-lg border-2 px-2 text-sm font-semibold transition-all duration-150 hover:-translate-y-[1px] active:translate-y-[3px] peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-2 ${
                   marcada ? BTN_ZONA_ON : BTN_ZONA_OFF
                 }`}
               >
