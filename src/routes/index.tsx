@@ -379,12 +379,12 @@ function Chart({ title, data, color }: { title: string; data: City[]; color: str
 
 type SortKey = "cidade" | "v22" | "v26" | "diff" | "pct";
 
-const COLUNAS: { key: SortKey; label: string; cls: string }[] = [
-  { key: "cidade", label: "Cidade", cls: "w-[34%]" },
-  { key: "v22", label: "2022", cls: "w-[16%]" },
-  { key: "v26", label: "2026", cls: "w-[16%]" },
-  { key: "diff", label: "dif.", cls: "w-[16%]" },
-  { key: "pct", label: "%", cls: "w-[18%]" },
+const COLUNAS: { key: SortKey; label: string; cls: string; grande?: boolean }[] = [
+  { key: "cidade", label: "Cidade", cls: "w-[40%]", grande: true },
+  { key: "v22", label: "2022", cls: "w-[15%]" },
+  { key: "v26", label: "2026", cls: "w-[15%]" },
+  { key: "diff", label: "dif.", cls: "w-[15%]" },
+  { key: "pct", label: "%", cls: "w-[15%]" },
 ];
 
 const sortValue = (c: City, k: SortKey): number =>
@@ -565,8 +565,8 @@ function Dashboard() {
             </select>
           </label>
         </div>
-        <div className="max-h-[410px] overflow-auto">
-          <table className="w-full min-w-[620px] table-fixed text-sm bg-nav/10">
+        <div className="max-h-[410px] overflow-x-auto overflow-y-auto overscroll-x-contain">
+          <table className="w-full min-w-[860px] table-fixed text-sm bg-nav/10">
             <thead className="sticky top-0 z-10 bg-nav">
               <tr className="text-center text-nav-foreground">
                 {COLUNAS.map((col) => {
@@ -576,7 +576,7 @@ function Dashboard() {
                       key={col.key}
                       scope="col"
                       aria-sort={ativo ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-                      className={`px-3 py-2 ${col.cls}`}
+                      className={`px-4 py-2 ${col.cls}`}
                     >
                       <button
                         type="button"
@@ -587,7 +587,9 @@ function Dashboard() {
                         title={`Ordenar por ${col.label}`}
                         className="flex min-h-14 w-full items-center justify-center gap-1 rounded-md border-2 border-black/20 bg-gradient-to-b from-white to-neutral-200 px-2 py-2 text-[11px] leading-tight font-bold uppercase tracking-wide text-nav shadow-[0_4px_0_0_rgba(0,0,0,0.4)] transition-all duration-150 hover:-translate-y-[1px] hover:from-chart-4 hover:to-amber-300 hover:text-black hover:shadow-[0_5px_0_0_rgba(0,0,0,0.45)] active:translate-y-[3px] active:shadow-[0_1px_0_0_rgba(0,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chart-4"
                       >
-                        <span className="text-center">{col.label}</span>
+                        <span className={`text-center ${col.grande ? "text-sm" : ""}`}>
+                          {col.label}
+                        </span>
                         {ativo && <span aria-hidden="true">{sortDir === "asc" ? "▲" : "▼"}</span>}
                       </button>
                     </th>
@@ -605,16 +607,20 @@ function Dashboard() {
               ) : (
                 list.map((c) => (
                   <tr key={c.cidade} className="border-b text-center hover:bg-nav/20">
-                    <td className="py-2 px-3">{c.cidade}</td>
-                    <td className="py-2 px-3">{fmt(c.v22)}</td>
-                    <td className="py-2 px-3">{fmt(c.v26)}</td>
+                    <td className="py-2 px-4 text-left">
+                      <span className="block truncate">{c.cidade}</span>
+                    </td>
+                    <td className="py-2 px-4 whitespace-nowrap">{fmt(c.v22)}</td>
+                    <td className="py-2 px-4 whitespace-nowrap">{fmt(c.v26)}</td>
                     <td
-                      className={`py-2 px-3 font-semibold ${c.diff >= 0 ? "text-success" : "text-danger"}`}
+                      className={`py-2 px-4 font-semibold whitespace-nowrap ${c.diff >= 0 ? "text-success" : "text-danger"}`}
                     >
                       {c.diff > 0 ? "+" : ""}
                       {fmt(c.diff)}
                     </td>
-                    <td className="py-2 px-3 text-muted-foreground">{pct(c.v22, c.v26)}</td>
+                    <td className="py-2 px-4 whitespace-nowrap text-muted-foreground">
+                      {pct(c.v22, c.v26)}
+                    </td>
                   </tr>
                 ))
               )}

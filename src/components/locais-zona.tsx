@@ -150,8 +150,8 @@ export function LocaisZona() {
       {!zona ? (
         <p className="text-sm text-muted-foreground">Selecione uma zona.</p>
       ) : (
-        <div className="max-h-[340px] overflow-auto">
-          <table className="w-full min-w-[720px] table-fixed text-sm">
+        <div className="max-h-[340px] overflow-x-auto overflow-y-auto overscroll-x-contain">
+          <table className="w-full min-w-[860px] table-fixed text-sm">
             <thead className="sticky top-0 z-10 bg-nav">
               <tr className="text-left text-nav-foreground">
                 {(
