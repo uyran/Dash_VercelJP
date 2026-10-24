@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { AjudaOrdem } from "@/components/ajuda-ordem";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import {
   AssembleiaPE,
@@ -40,13 +41,19 @@ const pct = (a: number, b: number) =>
       : "—"
     : `${(((b - a) / a) * 100).toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
 
-type City = { cidade: string; v22: number; v26: number; diff: number; pctText: string };
-type CityBase = Omit<City, "pctText">;
+type City = { cidade: string; v22: number; v26: number; diff: number };
 
-const TODAS = "__TODAS__";
+/* Colunas ordenáveis da tabela "Votos por cidade". */
+type OrdemCidade = "cidade" | "v22" | "v26" | "diff" | "pct";
+type Ordenacao = { chave: OrdemCidade; dir: "asc" | "desc" };
 
-const pctText = (c: CityBase) =>
-  c.v22 === 0 ? (c.v26 > 0 ? "novo" : "—") : `${c.diff > 0 ? "+" : ""}${pct(c.v22, c.v26)}`;
+/* Valor numérico usado na ordenação das colunas de números. */
+const valorOrd = (c: City, chave: OrdemCidade): number => {
+  if (chave === "cidade") return 0;
+  if (chave === "pct")
+    return c.v22 === 0 ? (c.v26 > 0 ? Number.POSITIVE_INFINITY : 0) : (c.v26 - c.v22) / c.v22;
+  return c[chave];
+};
 
 const ABREVIA: Record<string, string> = {
   "JABOATÃO DOS GUARARAPES": "JABOATÃO",
@@ -59,7 +66,7 @@ const nomeCidade = (c: string) => ABREVIA[c] ?? c;
 
 function useData() {
   return useMemo(() => {
-    const m = new Map<string, CityBase>();
+    const m = new Map<string, City>();
     for (const [c, , ano, v] of rows) {
       const o = m.get(c) ?? { cidade: c, v22: 0, v26: 0, diff: 0 };
       if (ano === 2022) o.v22 += v;
@@ -67,9 +74,7 @@ function useData() {
       o.diff = o.v26 - o.v22;
       m.set(c, o);
     }
-    const cities = [...m.values()]
-      .map((c) => ({ ...c, pctText: pctText(c) }))
-      .sort((a, b) => a.cidade.localeCompare(b.cidade));
+    const cities = [...m.values()].sort((a, b) => a.cidade.localeCompare(b.cidade));
     const t22 = cities.reduce((s, c) => s + c.v22, 0);
     const t26 = cities.reduce((s, c) => s + c.v26, 0);
     return { cities, t22, t26 };
@@ -244,7 +249,7 @@ function BarraShape(arg: unknown) {
     height = 0,
     fill = "currentColor",
     fillOpacity = 1,
-    pctText: pct = "",
+    value = 0,
     background,
   } = (arg ?? {}) as {
     x?: number;
@@ -253,13 +258,14 @@ function BarraShape(arg: unknown) {
     height?: number;
     fill?: string;
     fillOpacity?: number;
-    pctText?: string;
+    value?: number;
     background?: { x?: number; y?: number; width?: number; height?: number };
   };
   const bx = background?.x ?? Math.min(x, x + width);
   const by = background?.y ?? y;
   const bw = background?.width ?? Math.abs(width);
   const bh = background?.height ?? height;
+  const rotulo = `${value >= 0 ? "+" : ""}${fmt(value)}`;
   return (
     <g>
       <rect x={bx} y={by} width={bw} height={bh} fill="transparent" pointerEvents="all" />
@@ -271,7 +277,7 @@ function BarraShape(arg: unknown) {
         fill={fill}
         fillOpacity={fillOpacity}
       />
-      <BarPctLabel x={x} y={y} width={width} height={height} value={pct} color={fill} />
+      <BarPctLabel x={x} y={y} width={width} height={height} value={rotulo} color={fill} />
     </g>
   );
 }
@@ -315,37 +321,38 @@ function Chart({ title, data, color }: { title: string; data: City[]; color: str
   const porPagina = 15;
   const lastPage = Math.max(0, Math.ceil(data.length / porPagina) - 1);
   const visible = data.slice(page * porPagina, (page + 1) * porPagina);
+  const somenteQueda = data.length > 0 && data.every((c) => c.diff < 0);
   return (
     <div className="min-w-0 rounded-xl border bg-card p-5 shadow-sm">
       <div className="mb-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h3 className="mb-1 font-semibold">{title}</h3>
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Button
-            variant="default"
-            size="icon"
-            className="bg-nav text-nav-foreground hover:bg-nav/90"
-            aria-label={`Retroceder — ${title}`}
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-          >
-            <ChevronLeft />
-          </Button>
-          <Button
-            variant="default"
-            size="icon"
-            className="bg-nav text-nav-foreground hover:bg-nav/90"
-            aria-label={`Avançar — ${title}`}
-            onClick={() => setPage((p) => Math.min(lastPage, p + 1))}
-          >
-            <ChevronRight />
-          </Button>
+        <div className="flex shrink-0 flex-col items-center gap-1">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="default"
+              size="icon"
+              className="bg-nav text-nav-foreground hover:bg-nav/90"
+              aria-label={`Retroceder — ${title}`}
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+            >
+              <ChevronLeft />
+            </Button>
+            <Button
+              variant="default"
+              size="icon"
+              className="bg-nav text-nav-foreground hover:bg-nav/90"
+              aria-label={`Avançar — ${title}`}
+              onClick={() => setPage((p) => Math.min(lastPage, p + 1))}
+            >
+              <ChevronRight />
+            </Button>
+          </div>
+          <span className="text-xs text-muted-foreground" aria-live="polite">
+            {page * porPagina + 1}–{Math.min((page + 1) * porPagina, data.length)} de {data.length}
+          </span>
         </div>
-      </div>
-      <div className="mb-3 flex justify-end">
-        <span className="mr-[74px] text-xs text-muted-foreground" aria-live="polite">
-          {page * porPagina + 1}–{Math.min((page + 1) * porPagina, data.length)} de {data.length}
-        </span>
       </div>
       <ResponsiveContainer width="100%" height={440}>
         <BarChart data={visible} layout="vertical" margin={{ left: 0, right: 74 }}>
@@ -353,7 +360,11 @@ function Chart({ title, data, color }: { title: string; data: City[]; color: str
           <XAxis
             type="number"
             fontSize={11}
-            domain={[(min: number) => (min < 0 ? min * 1.45 : min), (max: number) => max]}
+            reversed={somenteQueda}
+            domain={[
+              (min: number) => (min < 0 ? min * 1.45 : min),
+              (max: number) => Math.max(max, 0),
+            ]}
           />
           <YAxis
             type="category"
@@ -377,36 +388,10 @@ function Chart({ title, data, color }: { title: string; data: City[]; color: str
   );
 }
 
-type SortKey = "cidade" | "v22" | "v26" | "diff" | "pct";
-
-const COLUNAS: { key: SortKey; label: string; cls: string }[] = [
-  { key: "cidade", label: "Cidade", cls: "w-[31%] px-2" },
-  { key: "v22", label: "Votos em 2022", cls: "w-[18%] px-2" },
-  { key: "v26", label: "Votos em 2026", cls: "w-[18%] px-2" },
-  { key: "diff", label: "Diferença", cls: "w-[16%] px-2" },
-  { key: "pct", label: "%", cls: "w-[17%] px-2" },
-];
-
-const sortValue = (c: City, k: SortKey): number =>
-  k === "v22"
-    ? c.v22
-    : k === "v26"
-      ? c.v26
-      : k === "diff"
-        ? c.diff
-        : k === "pct"
-          ? c.v22 === 0
-            ? c.v26 > 0
-              ? Number.POSITIVE_INFINITY
-              : 0
-            : (c.v26 - c.v22) / c.v22
-          : 0;
-
 function Dashboard() {
   const { cities, t22, t26 } = useData();
   const [filter, setFilter] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("cidade");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const [sort, setSort] = useState<Ordenacao>({ chave: "cidade", dir: "asc" });
 
   const up = cities.filter((c) => c.diff >= 0).sort((a, b) => b.diff - a.diff);
   const down = cities.filter((c) => c.diff < 0).sort((a, b) => a.diff - b.diff);
@@ -420,26 +405,39 @@ function Dashboard() {
   const top15total = top15.reduce((s, c) => s + c.v26, 0);
   const top15share = top15total / t26;
 
-  const toggleSort = (k: SortKey) => {
-    if (k === sortKey) {
-      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    } else {
-      setSortKey(k);
-      setSortDir("asc");
-    }
-  };
+  /* 1º clique na coluna: ordem crescente; clique seguinte: inverte a ordem. */
+  const ordenarPor = (chave: OrdemCidade) =>
+    setSort((s) =>
+      s.chave === chave ? { chave, dir: s.dir === "asc" ? "desc" : "asc" } : { chave, dir: "asc" },
+    );
+
+  const thBotao = (chave: OrdemCidade, rotulo: string) => (
+    <button
+      type="button"
+      onClick={() => ordenarPor(chave)}
+      aria-label={`Ordenar por ${rotulo}`}
+      aria-pressed={sort.chave === chave}
+      data-active={sort.chave === chave}
+      className="btn-3d th-btn group relative focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      {rotulo}
+      <span aria-hidden="true" className="text-[9px] opacity-80">
+        {sort.chave === chave ? (sort.dir === "asc" ? "▲" : "▼") : "↕"}
+      </span>
+      <AjudaOrdem />
+    </button>
+  );
 
   const list = useMemo(() => {
-    const base =
-      filter === TODAS ? cities : filter ? cities.filter((c) => c.cidade === filter) : [];
-    const sorted = [...base].sort((a, b) =>
-      sortKey === "cidade"
-        ? a.cidade.localeCompare(b.cidade, "pt-BR")
-        : sortValue(a, sortKey) - sortValue(b, sortKey),
+    const base = filter ? cities.filter((c) => c.cidade === filter) : cities;
+    const dir = sort.dir === "asc" ? 1 : -1;
+    return [...base].sort((a, b) =>
+      sort.chave === "cidade"
+        ? dir * a.cidade.localeCompare(b.cidade, "pt-BR")
+        : dir * (valorOrd(a, sort.chave) - valorOrd(b, sort.chave)) ||
+          a.cidade.localeCompare(b.cidade, "pt-BR"),
     );
-    if (sortDir === "desc") sorted.reverse();
-    return sorted;
-  }, [cities, filter, sortKey, sortDir]);
+  }, [cities, filter, sort]);
 
   return (
     <main className="mx-auto max-w-[1600px] space-y-8 px-4 py-8">
@@ -546,84 +544,51 @@ function Dashboard() {
       </section>
 
       <section className="rounded-xl border bg-card p-5 shadow-sm">
-        <h3 className="text-[2rem] font-semibold">Votos por cidade</h3>
-        <div className="mb-3 mt-3 flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 text-sm font-semibold">
+        <div className="mb-3">
+          <h3 className="text-[2rem] font-semibold">Votos por cidade</h3>
+          <label className="mt-3 flex items-center gap-2 text-sm font-semibold">
             <span className="whitespace-nowrap">Cidade</span>
             <select
               value={filter}
               onChange={(e) => setFilter(e.target.value)}
-              className="w-64 rounded-md border-2 border-nav/40 bg-nav/10 px-4 py-2 text-sm font-medium shadow-sm"
+              aria-label="Escolher cidade"
+              className="rounded-md border-2 border-nav/40 bg-nav/10 px-4 py-2 text-sm font-medium shadow-sm"
             >
-              <option value="">Selecione uma cidade</option>
-              <option value={TODAS}>Todas as cidades</option>
+              <option value="">Todas as cidades</option>
               {cities.map((c) => (
-                <option key={c.cidade} value={c.cidade}>
-                  {c.cidade}
-                </option>
+                <option key={c.cidade}>{c.cidade}</option>
               ))}
             </select>
           </label>
         </div>
-        <div className="max-h-[410px] overflow-x-auto overflow-y-auto overscroll-x-contain">
-          <table className="w-full min-w-[860px] table-fixed text-sm bg-nav/10">
-            <thead className="sticky top-0 z-10 bg-nav">
-              <tr className="text-center text-nav-foreground">
-                {COLUNAS.map((col) => {
-                  const ativo = sortKey === col.key;
-                  return (
-                    <th
-                      key={col.key}
-                      scope="col"
-                      aria-sort={ativo ? (sortDir === "asc" ? "ascending" : "descending") : "none"}
-                      className={`py-2 ${col.cls}`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => toggleSort(col.key)}
-                        aria-label={`Ordenar por ${col.label} — ${
-                          ativo && sortDir === "asc" ? "decrescente" : "crescente"
-                        }`}
-                        title={`Ordenar por ${col.label}`}
-                        className={`${
-                          col.key === "cidade" ? "w-[56%] mr-auto" : "w-full"
-                        } flex items-center justify-center gap-1 rounded-md border-2 border-black/20 bg-gradient-to-b from-white to-neutral-200 px-2 py-1.5 text-[11px] leading-none font-bold uppercase tracking-wide text-nav shadow-[0_3px_0_0_rgba(0,0,0,0.4)] transition-all duration-150 hover:-translate-y-[1px] hover:from-chart-4 hover:to-amber-300 hover:text-black hover:shadow-[0_4px_0_0_rgba(0,0,0,0.45)] active:translate-y-[2px] active:shadow-[0_1px_0_0_rgba(0,0,0,0.4)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-chart-4`}
-                      >
-                        <span className="text-center">{col.label}</span>
-                        {ativo && <span aria-hidden="true">{sortDir === "asc" ? "▲" : "▼"}</span>}
-                      </button>
-                    </th>
-                  );
-                })}
+        <div className="max-h-[500px] overflow-auto">
+          <table className="w-full text-sm">
+            <thead className="sticky top-0 bg-card">
+              <tr className="border-b text-left text-muted-foreground">
+                <th className="py-2">{thBotao("cidade", "Cidade")}</th>
+                <th className="px-5 py-2 text-center">{thBotao("v22", "2022")}</th>
+                <th className="px-5 py-2 text-center">{thBotao("v26", "2026")}</th>
+                <th className="px-5 py-2 text-center">{thBotao("diff", "Dif.")}</th>
+                <th className="px-5 py-2 text-center">{thBotao("pct", "%")}</th>
               </tr>
             </thead>
             <tbody>
-              {list.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-6 px-4 text-left text-muted-foreground">
-                    Selecione uma cidade para consultar a votação
+              {list.map((c) => (
+                <tr key={c.cidade} className="border-b hover:bg-muted">
+                  <td className="py-2">{c.cidade}</td>
+                  <td className="px-5 py-2 text-center whitespace-nowrap">{fmt(c.v22)}</td>
+                  <td className="px-5 py-2 text-center whitespace-nowrap">{fmt(c.v26)}</td>
+                  <td
+                    className={`px-5 py-2 text-center whitespace-nowrap font-semibold ${c.diff >= 0 ? "text-success" : "text-danger"}`}
+                  >
+                    {c.diff > 0 ? "+" : ""}
+                    {fmt(c.diff)}
+                  </td>
+                  <td className="px-5 py-2 text-center whitespace-nowrap text-muted-foreground">
+                    {pct(c.v22, c.v26)}
                   </td>
                 </tr>
-              ) : (
-                list.map((c) => (
-                  <tr key={c.cidade} className="border-b text-center hover:bg-nav/20">
-                    <td className="py-2 pl-4 pr-2 text-left">
-                      <span className="block truncate">{c.cidade}</span>
-                    </td>
-                    <td className="py-2 px-2 whitespace-nowrap text-center">{fmt(c.v22)}</td>
-                    <td className="py-2 px-2 whitespace-nowrap text-center">{fmt(c.v26)}</td>
-                    <td
-                      className={`py-2 px-2 font-semibold whitespace-nowrap text-center ${c.diff >= 0 ? "text-success" : "text-danger"}`}
-                    >
-                      {c.diff > 0 ? "+" : ""}
-                      {fmt(c.diff)}
-                    </td>
-                    <td className="py-2 px-2 whitespace-nowrap text-center text-muted-foreground">
-                      {pct(c.v22, c.v26)}
-                    </td>
-                  </tr>
-                ))
-              )}
+              ))}
             </tbody>
           </table>
         </div>
